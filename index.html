@@ -1,0 +1,739 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BlobBoards</title>
+<meta name="description" content="BlobBoards: Robust Markers for Accurate Pose (BMVC 2026). Dense multi-scale blob fiducials, a GPU-resident detection-to-pose pipeline, Julia and Python.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Castoro:ital@0;1&display=swap" rel="stylesheet">
+<style>
+/* ---------------------------------------------------------------- tokens --- */
+:root {
+  color-scheme: light;
+  --bb-bg: #ffffff;
+  --bb-surface: #f4f7f9;
+  --bb-on-surface: #ffffff;
+  --bb-border: #d5dde3;
+  --bb-text: #1f2933;
+  --bb-muted: #5b6772;
+  --bb-primary: #0f7b9d;
+  --bb-primary-highlight: #0a5d78;
+  --bb-primary-soft: rgba(15, 123, 157, 0.10);
+  --bb-code-bg: #f4f7f9;
+  --bb-shadow: 0 1px 2px rgba(31, 41, 51, 0.06), 0 1px 1px rgba(31, 41, 51, 0.04);
+  --bb-shadow-hover: 0 6px 18px rgba(31, 41, 51, 0.10);
+  --bb-nav-bg: rgba(255, 255, 255, 0.92);
+  --bb-hero-bg: #e8f3f7;
+  --bb-serif: Castoro, "Iowan Old Style", "Palatino Linotype", Georgia, "Times New Roman", serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bb-bg: #14181c;
+    --bb-surface: #1d2329;
+    --bb-on-surface: #14181c;
+    --bb-border: #2f3840;
+    --bb-text: #e6ebef;
+    --bb-muted: #9aa7b2;
+    --bb-primary: #5ccbe8;
+    --bb-primary-highlight: #8fdcf0;
+    --bb-primary-soft: rgba(92, 203, 232, 0.14);
+    --bb-code-bg: #1a2026;
+    --bb-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+    --bb-shadow-hover: 0 8px 22px rgba(0, 0, 0, 0.45);
+    --bb-nav-bg: rgba(20, 24, 28, 0.92);
+    --bb-hero-bg: #182228;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bb-bg: #14181c;
+  --bb-surface: #1d2329;
+  --bb-on-surface: #14181c;
+  --bb-border: #2f3840;
+  --bb-text: #e6ebef;
+  --bb-muted: #9aa7b2;
+  --bb-primary: #5ccbe8;
+  --bb-primary-highlight: #8fdcf0;
+  --bb-primary-soft: rgba(92, 203, 232, 0.14);
+  --bb-code-bg: #1a2026;
+  --bb-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --bb-shadow-hover: 0 8px 22px rgba(0, 0, 0, 0.45);
+  --bb-nav-bg: rgba(20, 24, 28, 0.92);
+  --bb-hero-bg: #182228;
+}
+
+/* ------------------------------------------------------------------ base --- */
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--bb-bg);
+  color: var(--bb-text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--bb-primary); text-decoration: none; }
+a:hover { color: var(--bb-primary-highlight); text-decoration: underline; }
+:focus-visible { outline: 2px solid var(--bb-primary); outline-offset: 2px; border-radius: 2px; }
+img { max-width: 100%; height: auto; display: block; }
+code, pre, kbd {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 0.92em;
+}
+code { color: var(--bb-primary); }
+pre {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  background: var(--bb-code-bg);
+  border: 1px solid var(--bb-border);
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  line-height: 1.5;
+  font-size: 0.88rem;
+  color: var(--bb-text);
+}
+pre code { color: inherit; font-size: inherit; }
+pre .c { color: var(--bb-muted); }
+pre .k { color: var(--bb-primary); }
+h1, h2, h3 { line-height: 1.2; text-wrap: balance; }
+.skip {
+  position: absolute; left: -999px; top: 0.5rem;
+  background: var(--bb-primary); color: #fff; padding: 0.4rem 0.8rem; border-radius: 0.3rem; z-index: 100;
+}
+.skip:focus { left: 0.5rem; }
+.container { max-width: 960px; margin: 0 auto; padding: 0 1.25rem; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+
+/* ---------------------------------------------------------------- navbar --- */
+.navbar {
+  position: sticky; top: 0; z-index: 50;
+  background: var(--bb-nav-bg);
+  backdrop-filter: saturate(160%) blur(8px);
+  -webkit-backdrop-filter: saturate(160%) blur(8px);
+  border-bottom: 1px solid var(--bb-border);
+}
+.navbar__inner {
+  max-width: 1200px; margin: 0 auto; padding: 0 1.25rem;
+  height: 3.6rem;
+  display: flex; align-items: center; gap: 1.5rem;
+}
+.brand {
+  display: inline-flex; align-items: center; gap: 0.55rem;
+  color: var(--bb-text); font-weight: 800; letter-spacing: 0.04em; font-size: 1.05rem;
+}
+.brand:hover { text-decoration: none; color: var(--bb-text); }
+.brand svg { color: var(--bb-primary); }
+.navlinks { display: flex; gap: 1.25rem; margin-left: 0.5rem; }
+.navlinks a { color: var(--bb-muted); font-size: 0.95rem; padding: 0.35rem 0; border-bottom: 2px solid transparent; }
+.navlinks a:hover { color: var(--bb-primary); text-decoration: none; }
+.navicons { margin-left: auto; display: flex; align-items: center; gap: 0.25rem; }
+.iconbtn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 2.25rem; height: 2.25rem; border-radius: 0.4rem;
+  color: var(--bb-muted); background: transparent; border: 0; cursor: pointer;
+}
+.iconbtn:hover { color: var(--bb-primary); background: var(--bb-primary-soft); text-decoration: none; }
+.iconbtn svg { width: 1.2rem; height: 1.2rem; }
+.iconbtn .only-light, .iconbtn .only-dark, .iconbtn .only-auto { display: none; }
+.iconbtn[data-mode="light"] .only-light, .iconbtn[data-mode="dark"] .only-dark, .iconbtn[data-mode="auto"] .only-auto { display: block; }
+@media (max-width: 640px) {
+  .navlinks { display: none; }
+}
+
+/* ------------------------------------------------------------------ hero --- */
+.hero { background: var(--bb-hero-bg); border-bottom: 1px solid var(--bb-border); }
+.hero__inner { text-align: center; padding: 2.75rem 1.25rem 2.25rem; max-width: 900px; margin: 0 auto; }
+.hero__title { font-size: 3rem; font-weight: 800; letter-spacing: 0.06em; margin: 0 0 0.25rem; line-height: 1.1; }
+.hero__tagline { font-family: var(--bb-serif); font-size: 1.75rem; font-weight: 400; color: var(--bb-primary); margin: 0 0 1.25rem; }
+.pub__venue {
+  display: inline-block; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--bb-primary); border: 1px solid var(--bb-primary); border-radius: 2rem; padding: 0.2rem 0.75rem; margin: 0 0 1rem;
+}
+.pub__authors { font-size: 1.1rem; margin: 0 0 0.2rem; line-height: 1.5; max-width: 720px; margin-left: auto; margin-right: auto; }
+.pub__affil { color: var(--bb-muted); margin: 0 0 1.4rem; }
+.pub__links { display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: center; }
+.pill {
+  display: inline-flex; align-items: center; gap: 0.45rem;
+  padding: 0.55rem 1.15rem; border-radius: 2rem;
+  background: var(--bb-text); color: var(--bb-bg); border: 1px solid var(--bb-text);
+  font-weight: 600; font-size: 0.95rem;
+  transition: transform 0.06s ease, background 0.15s ease, border-color 0.15s ease;
+}
+.pill:hover { text-decoration: none; color: var(--bb-bg); transform: translateY(-1px); background: var(--bb-primary-highlight); border-color: var(--bb-primary-highlight); }
+.pill--accent { background: var(--bb-primary); border-color: var(--bb-primary); color: var(--bb-on-surface); }
+.pill--accent:hover { color: var(--bb-on-surface); }
+.pill svg { width: 1rem; height: 1rem; }
+
+figure { margin: 0; }
+.hero-figure { max-width: 960px; margin: 2rem auto 1rem; padding: 0 1.25rem; text-align: center; }
+.abstract p { font-family: var(--bb-serif); font-size: 1.1rem; line-height: 1.7; text-align: justify; hyphens: auto; }
+
+/* ------------------------------------------------------------------ method --- */
+.pipe { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; }
+.pipe figure { text-align: center; }
+.pipe img { width: 100%; border-radius: 0.5rem; border: 1px solid var(--bb-border); background: #fff; }
+.pipe__label { font-size: 0.92rem; font-weight: 600; margin: 0 0 0.4rem; }
+.pipe__label span { color: var(--bb-muted); font-weight: 400; }
+.method-caption { max-width: 760px; margin: 0.6rem auto 2.25rem; text-align: left; }
+@media (max-width: 700px) { .pipe { grid-template-columns: 1fr 1fr; } }
+.hero-figure img { width: 100%; border-radius: 0.75rem; border: 1px solid var(--bb-border); background: #fff; }
+figcaption { font-size: 0.85rem; color: var(--bb-muted); margin-top: 0.5rem; text-align: center; }
+
+/* -------------------------------------------------------------- sections --- */
+section { scroll-margin-top: 4.5rem; }
+.section-title { text-align: center; font-size: 1.9rem; font-weight: 700; margin: 3.25rem 0 0.5rem; }
+.section-subtitle { text-align: center; color: var(--bb-muted); margin: 0 auto 1.5rem; max-width: 640px; }
+.prose { max-width: 720px; margin: 0 auto; }
+.prose p { margin: 0 0 1rem; }
+.prose ol { padding-left: 1.4rem; margin: 0; }
+.prose ol > li { margin-bottom: 1.25rem; }
+.prose ol > li > p { margin: 0 0 0.6rem; }
+.prose pre { margin-top: 0.5rem; }
+
+/* ---------------------------------------------------------------- install --- */
+.cis {
+  max-width: 780px; margin: 0 auto 1rem;
+  border: 1px solid var(--bb-border); border-radius: 0.75rem;
+  padding: 1.25rem 1.5rem 1.5rem; background: var(--bb-surface);
+}
+.cis__row { display: flex; align-items: flex-start; gap: 1rem; padding: 0.5rem 0; }
+.cis__row + .cis__row { border-top: 1px solid var(--bb-border); }
+.cis__label {
+  flex: 0 0 92px; padding-top: 0.4rem;
+  font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--bb-muted);
+}
+.cis__options { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.cis__btn {
+  cursor: pointer; padding: 0.4rem 0.95rem; border-radius: 2rem;
+  border: 1px solid var(--bb-border); background: var(--bb-bg); color: var(--bb-text);
+  font: inherit; font-size: 0.92rem; font-weight: 500;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.cis__btn:hover:not(:disabled):not(.active) { border-color: var(--bb-primary); color: var(--bb-primary); }
+.cis__btn.active { background: var(--bb-primary); border-color: var(--bb-primary); color: var(--bb-on-surface); }
+.cis__btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.cis__output { margin-top: 1rem; }
+.cis__cmd {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  background: var(--bb-bg); border: 1px solid var(--bb-border); border-radius: 0.5rem; padding: 0.75rem 1rem;
+}
+.cis__cmd code { background: transparent; color: var(--bb-text); font-size: 0.92rem; overflow-x: auto; white-space: nowrap; display: block; }
+.cis__prompt { color: var(--bb-muted); user-select: none; margin-right: 0.4rem; }
+.cis__copy {
+  flex: 0 0 auto; cursor: pointer; padding: 0.35rem 0.85rem; border-radius: 0.4rem;
+  border: 1px solid var(--bb-primary); background: transparent; color: var(--bb-primary);
+  font: inherit; font-size: 0.85rem; font-weight: 600;
+}
+.cis__copy:hover { background: var(--bb-primary); color: var(--bb-on-surface); }
+.cis__note { margin: 0.75rem 0 0; font-size: 0.88rem; color: var(--bb-muted); }
+.install-more { text-align: center; color: var(--bb-muted); font-size: 0.95rem; }
+@media (max-width: 500px) {
+  .cis__row { flex-direction: column; gap: 0.4rem; }
+  .cis__label { flex: none; padding-top: 0; }
+  .hero__title { font-size: 2.25rem; }
+}
+
+/* --------------------------------------------------------------- features --- */
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 1rem; }
+.card {
+  display: flex; flex-direction: column;
+  background: var(--bb-bg); border: 1px solid var(--bb-border); border-radius: 0.5rem;
+  box-shadow: var(--bb-shadow); padding: 1.1rem 1.2rem 1rem;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+.card:hover { box-shadow: var(--bb-shadow-hover); transform: translateY(-2px); }
+.card h3 { font-size: 1.05rem; font-weight: 700; margin: 0 0 0.4rem; }
+.card p { color: var(--bb-muted); font-size: 0.95rem; margin: 0 0 0.9rem; flex: 1; }
+.card a { font-weight: 600; font-size: 0.92rem; }
+
+/* --------------------------------------------------------------- figures --- */
+.figrow { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; align-items: start; }
+.figrow img { width: 100%; border-radius: 0.5rem; border: 1px solid var(--bb-border); background: #fff; aspect-ratio: 4 / 3; object-fit: cover; }
+.figrow figcaption { text-align: left; }
+.figrow figcaption b { color: var(--bb-text); }
+
+/* ---------------------------------------------------------------- results --- */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+.stat { background: var(--bb-surface); border: 1px solid var(--bb-border); border-radius: 0.5rem; padding: 1rem 1.1rem; }
+.stat__value { font-size: 2rem; font-weight: 800; color: var(--bb-primary); font-variant-numeric: tabular-nums; line-height: 1.1; letter-spacing: -0.01em; }
+.stat__value small { font-size: 1rem; font-weight: 600; color: var(--bb-muted); margin-left: 0.15rem; }
+.stat__label { color: var(--bb-muted); font-size: 0.9rem; margin-top: 0.35rem; }
+.wide-figure { margin-bottom: 1.5rem; }
+.wide-figure img { width: 100%; border-radius: 0.5rem; border: 1px solid var(--bb-border); background: #fff; }
+.wide-figure figcaption { max-width: 720px; margin-left: auto; margin-right: auto; }
+.results-grid { display: grid; grid-template-columns: 2fr 3fr; gap: 1.5rem; align-items: center; }
+.results-grid img { width: 100%; border-radius: 0.5rem; border: 1px solid var(--bb-border); background: #fff; }
+.results-grid figcaption { text-align: left; }
+.results-text p { margin: 0; color: var(--bb-muted); font-size: 0.97rem; }
+@media (max-width: 760px) { .results-grid { grid-template-columns: 1fr; } }
+
+/* ---------------------------------------------------------------- footer --- */
+footer {
+  margin-top: 4rem; padding: 1.5rem 0 2.5rem;
+  border-top: 1px solid var(--bb-border);
+  color: var(--bb-muted); font-size: 0.88rem; text-align: center;
+}
+footer p { margin: 0.25rem 0; }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <radialGradient id="bb-blob" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="currentColor" stop-opacity="1"/>
+      <stop offset="55%" stop-color="currentColor" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="currentColor" stop-opacity="0"/>
+    </radialGradient>
+    <symbol id="bb-logo" viewBox="0 0 32 32">
+      <rect x="1" y="1" width="30" height="30" rx="4" fill="none" stroke="currentColor" stroke-width="1.6"/>
+      <circle cx="11.5" cy="11.5" r="8" fill="url(#bb-blob)"/>
+      <circle cx="22.5" cy="21" r="7" fill="url(#bb-blob)"/>
+      <circle cx="10" cy="24" r="4" fill="url(#bb-blob)"/>
+      <circle cx="24" cy="8.5" r="3.5" fill="url(#bb-blob)"/>
+      <circle cx="17.5" cy="28" r="2" fill="url(#bb-blob)"/>
+      <circle cx="4.5" cy="17.5" r="1.8" fill="url(#bb-blob)"/>
+      <circle cx="28.5" cy="15" r="1.6" fill="url(#bb-blob)"/>
+    </symbol>
+    <symbol id="ic-github" viewBox="0 0 24 24">
+      <path fill="currentColor" d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2.1c-3.2.7-3.87-1.37-3.87-1.37-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.19 1.76 1.19 1.03 1.76 2.69 1.25 3.35.96.1-.75.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.8 1.19 1.83 1.19 3.09 0 4.42-2.69 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z"/>
+    </symbol>
+    <symbol id="ic-pdf" viewBox="0 0 24 24">
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/>
+      </g>
+    </symbol>
+    <symbol id="ic-book" viewBox="0 0 24 24">
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+      </g>
+    </symbol>
+  </defs>
+</svg>
+
+<header class="navbar">
+  <div class="navbar__inner">
+    <a class="brand" href="#top" aria-label="BlobBoards home">
+      <svg width="26" height="26" aria-hidden="true"><use href="#bb-logo"/></svg>
+      BlobBoards
+    </a>
+    <nav class="navlinks" aria-label="Sections">
+      <a href="#publication">Paper</a>
+      <a href="#abstract">Abstract</a>
+      <a href="#install">Install</a>
+      <a href="#features">Features</a>
+      <a href="#method">Method</a>
+      <a href="#results">Results</a>
+      <a href="#getting-started">Getting Started</a>
+      <a href="https://github.com/prittjam/BlobBoards.jl/tree/master/docs/src">Docs</a>
+    </nav>
+    <div class="navicons">
+      <button class="iconbtn" id="theme-toggle" type="button" data-mode="auto" title="Color mode: system" aria-label="Toggle color mode">
+        <svg class="only-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor" stroke="none"/></svg>
+        <svg class="only-light" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        <svg class="only-dark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+      <a class="iconbtn" href="https://github.com/prittjam/BlobBoards.jl" title="GitHub" aria-label="BlobBoards on GitHub" rel="noopener" target="_blank">
+        <svg aria-hidden="true"><use href="#ic-github"/></svg>
+      </a>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+<!-- ================================================================ hero -->
+<section class="hero" id="top">
+  <div class="hero__inner">
+    <h1 class="hero__title">BlobBoards</h1>
+    <p class="hero__tagline">Robust Markers for Accurate Pose</p>
+    <div class="pub" id="publication">
+      <p class="pub__venue">BMVC 2026</p>
+      <p class="pub__authors">James Pritts, Till Sittart, Hendrik Sauer, Silja Janßen, Felix Seegräber, David Nakath, Kevin Köser</p>
+      <p class="pub__affil">Marine Data Science, Kiel University</p>
+      <div class="pub__links">
+        <a class="pill" href="blobboards_bmvc2026.pdf"><svg aria-hidden="true"><use href="#ic-pdf"/></svg>Paper</a>
+        <!-- arXiv: add once the preprint is listed
+        <a class="pill" href="https://arxiv.org/abs/XXXX.XXXXX">arXiv</a>
+        -->
+        <a class="pill" href="https://github.com/prittjam/BlobBoards.jl" rel="noopener" target="_blank"><svg aria-hidden="true"><use href="#ic-github"/></svg>Code</a>
+        <a class="pill" href="https://github.com/prittjam/BlobBoards.jl/tree/master/docs/src"><svg aria-hidden="true"><use href="#ic-book"/></svg>Docs</a>
+        <a class="pill pill--accent" href="#getting-started">Get Started</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="teaser">
+  <figure class="hero-figure">
+    <img src="images/teaser.jpg" alt="A cluttered scene with twenty-five BlobBoards at many distances and angles, each outlined in a distinct colour with its blob pattern re-projected onto the board." width="1800" height="545">
+    <figcaption>
+      All 25 BlobBoards in the image are detected, identified, and registered
+      against a 50-board gallery &mdash; 25 of its entries are absent confusers,
+      and identification is still perfect. Colour distinguishes detections; the
+      overlaid pattern shows registration accuracy across large variations in
+      scale, distance, and obliquity.
+    </figcaption>
+  </figure>
+</section>
+
+<!-- ============================================================ abstract -->
+<section id="abstract" class="container">
+  <h2 class="section-title">Abstract</h2>
+  <div class="prose abstract">
+    <p>
+      We propose BlobBoards, a fiducial marker system comprising a dense,
+      multi-scale field of Gaussian blobs and a feature-based pipeline for joint
+      detection, identification, and pose estimation. Each board is registered
+      from hundreds of blob features whose dense spatial coverage constrains
+      pose, while multiple scales preserve detectability across large changes in
+      focal length, distance, and obliquity. Learned local descriptors are
+      matched to the reference pattern and spatially verified, so the
+      correspondences determine pose and certify identity. Against
+      motion-capture ground truth, BlobBoards achieve median translation errors
+      of 3.6&ndash;5.0&thinsp;mm, reducing AprilTag's median translation error by
+      89% on small boards and 70% on large ones. They also produce far fewer
+      large-rotation failures than state-of-the-art tag systems. BlobBoards
+      achieve the highest detection rate, 80% versus 74% for AprilTag and 58%
+      for ArUco, with the largest margin on the smallest markers. Under 50%
+      occlusion, they still detect 69% of boards with essentially unchanged
+      median translation error, while AprilTag and ArUco detect none. In
+      experiments BlobBoards give state-of-the-art detection rate, pose accuracy
+      and occlusion robustness.
+    </p>
+  </div>
+</section>
+
+<!-- ============================================================= install -->
+<section id="install" class="container">
+  <h2 class="section-title">Install BlobBoards</h2>
+  <p class="section-subtitle">Pick a language and an install method to get the recommended command.</p>
+
+  <div class="cis" id="cis">
+    <div class="cis__row">
+      <div class="cis__label">Language</div>
+      <div class="cis__options" role="group" aria-label="Language">
+        <button class="cis__btn active" type="button" data-lang="julia">Julia</button>
+        <button class="cis__btn" type="button" data-lang="python">Python</button>
+      </div>
+    </div>
+    <div class="cis__row">
+      <div class="cis__label">Method</div>
+      <div class="cis__options" role="group" aria-label="Install method">
+        <button class="cis__btn active" type="button" data-method="pixi">pixi</button>
+        <button class="cis__btn" type="button" data-method="pkg">Pkg.add</button>
+        <button class="cis__btn" type="button" data-method="pip" disabled>pip</button>
+      </div>
+    </div>
+    <div class="cis__output">
+      <div class="cis__cmd">
+        <code><span class="cis__prompt" id="cis-prompt">$</span><span id="cis-cmd"></span></code>
+        <button class="cis__copy" type="button" id="cis-copy">Copy</button>
+      </div>
+      <p class="cis__note" id="cis-note"></p>
+    </div>
+  </div>
+  <p class="install-more">
+    For manual setup (Julia 1.12+, Ghostscript) and the GPU environment, see the
+    <a href="https://github.com/prittjam/BlobBoards.jl#installation">installation section of the README</a>.
+  </p>
+</section>
+
+<!-- ============================================================ features -->
+<section id="features" class="container">
+  <h2 class="section-title">Features</h2>
+  <p class="section-subtitle">Everything from a seeded pattern to a verified board pose, in one package.</p>
+  <div class="cards">
+    <article class="card">
+      <h3>Deterministic multi-scale patterns</h3>
+      <p>Patterns are rendered bit-exactly from a seeded <code>PatternConfig</code>. Blob scales follow a logarithmic distribution, so some subset of blobs is detectable at any viewing distance.</p>
+      <a href="https://github.com/prittjam/BlobBoards.jl/blob/master/docs/src/guide/patterns.md">Patterns guide</a>
+    </article>
+    <article class="card">
+      <h3>Printable calibration boards</h3>
+      <p>PDF boards with rulers, QR metadata, and a compact UID, specified in physical units (<code>mm</code>, <code>inch</code>, <code>dpi</code>) that are checked at compile time. Every board ships with a JSON sidecar that reproduces it.</p>
+      <a href="https://github.com/prittjam/BlobBoards.jl/blob/master/docs/src/guide/boards.md">Boards guide</a>
+    </article>
+    <article class="card">
+      <h3>Detection to pose</h3>
+      <p><code>find_boards</code> detects blobs, fits elliptical frames, describes canonical patches, matches them against a board gallery, and estimates pose by P3P or homography &mdash; every board in the image, each verified by spatial consistency and by the appearance of its own inliers.</p>
+      <a href="https://github.com/prittjam/BlobBoards.jl#detection-and-pose">Detection and pose</a>
+    </article>
+    <article class="card">
+      <h3>Backend-generic GPU pipeline</h3>
+      <p>Detection, adaptation, canonicalization, and matching are written once against KernelAbstractions: threaded CPU by default, CUDA or any other KA backend by passing a <code>device</code>. Descriptors run through ONNX Runtime.</p>
+      <a href="https://github.com/prittjam/BlobBoards.jl#detection-and-pose">Backends</a>
+    </article>
+    <article class="card">
+      <h3>Tracking and training data</h3>
+      <p><code>track_boards</code> warm-starts each video frame from the last. <code>build_tracks</code> turns video with ground-truth homographies into <code>.tracks</code> files of canonicalized blob patches for training local descriptors.</p>
+      <a href="https://github.com/prittjam/BlobBoards.jl/blob/master/docs/src/guide/board-tracks.md">Board tracks</a>
+    </article>
+    <article class="card">
+      <h3>Python interface</h3>
+      <p>The <code>blobboards</code> package wraps the Julia core through <code>juliacall</code>: patterns and boards come back as NumPy arrays and dataclasses, and physical parameters accept Pint quantities.</p>
+      <a href="https://github.com/prittjam/BlobBoards.jl/blob/master/python/README.md">Python package</a>
+    </article>
+  </div>
+</section>
+
+<!-- ============================================================== method -->
+<section id="method" class="container">
+  <h2 class="section-title">Method</h2>
+  <p class="section-subtitle">A board is registered from hundreds of blob features, not from four corners &mdash; that is where the accuracy and the occlusion robustness come from.</p>
+  <div class="pipe">
+    <figure>
+      <p class="pipe__label">(a) <span>detect</span></p>
+      <img src="images/pipe_detect.jpg" alt="A photographed board with affine blob detections drawn as many small ellipses." width="813" height="1084">
+    </figure>
+    <figure>
+      <p class="pipe__label">(b) <span>adapt</span></p>
+      <img src="images/pipe_adapt.jpg" alt="The same board with detections refined to anisotropic ellipses in magenta; twelve pose inliers are coloured individually." width="813" height="1084">
+    </figure>
+    <figure>
+      <p class="pipe__label">(c) <span>canonicalize</span></p>
+      <img src="images/pipe_logpolar.jpg" alt="The twelve inlier blobs as 64 by 64 log-polar patches, each bordered in its ellipse colour." width="813" height="1084">
+    </figure>
+    <figure>
+      <p class="pipe__label">(d) <span>match &amp; verify</span></p>
+      <img src="images/pipe_register.jpg" alt="The reference pattern projected onto the board under the recovered pose, with reference blob centres in green." width="813" height="1084">
+    </figure>
+  </div>
+  <figcaption class="method-caption">
+    Blob detection-to-pose pipeline on a detected board. <b>(a)</b> Affine
+    detections from the ASIFT scale space. <b>(b)</b> IRLS adaptation to
+    anisotropic ellipses, magenta except the twelve pose inliers, which are
+    coloured individually. <b>(c)</b> Those inliers canonicalized to 64&times;64
+    log-polar patches, each bordered in its ellipse colour from (b).
+    <b>(d)</b> Descriptors matched and spatially verified: the pattern is
+    projected under the recovered pose, with reference blob centres in green at
+    opacity proportional to their geometric consistency with it.
+  </figcaption>
+  <div class="figrow">
+    <figure>
+      <img src="images/pattern.jpg" alt="A square blob pattern: large soft Gaussian blobs packed with progressively smaller ones down to single dots." width="720" height="720">
+      <figcaption><b>Generate.</b> A seeded pattern packs blobs from several octaves of scale into one field. The same seed reproduces the same board, in Julia or Python.</figcaption>
+    </figure>
+    <figure>
+      <img src="images/adapted.jpg" alt="A stack of printed boards photographed obliquely; the top board has every blob outlined in teal with its fitted ellipse." width="960" height="720">
+      <figcaption><b>Adapt and register.</b> Each detected blob gets a fitted elliptical frame, is canonicalized into a patch, and described by a learned log-polar network. Matches to the reference pattern are spatially verified, so the correspondences determine pose and certify identity.</figcaption>
+    </figure>
+    <figure>
+      <img src="images/mocap.jpg" alt="A rig of BlobBoards on a tripod in a motion-capture lab, with pose axes drawn on each detected board." width="960" height="641">
+      <figcaption><b>Evaluate.</b> Poses are scored against motion-capture ground truth on a rig of boards at a range of sizes, distances, and angles, alongside AprilTag and ArUco.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ============================================================= results -->
+<section id="results" class="container">
+  <h2 class="section-title">Results</h2>
+  <p class="section-subtitle">Against motion-capture ground truth, compared with AprilTag and ArUco on the same rig.</p>
+  <div class="stats">
+    <div class="stat">
+      <div class="stat__value">80<small>%</small></div>
+      <div class="stat__label">boards detected &mdash; AprilTag 74%, ArUco 58% &mdash; with the largest margin on the smallest markers</div>
+    </div>
+    <div class="stat">
+      <div class="stat__value">3.6&ndash;5.0<small>mm</small></div>
+      <div class="stat__label">median translation error, small to large boards</div>
+    </div>
+    <div class="stat">
+      <div class="stat__value">&minus;89<small>%</small></div>
+      <div class="stat__label">AprilTag's median translation error on small boards (&minus;70% on large ones)</div>
+    </div>
+    <div class="stat">
+      <div class="stat__value">69<small>%</small></div>
+      <div class="stat__label">boards still detected at 50% occlusion, with essentially unchanged median translation error; AprilTag and ArUco detect none</div>
+    </div>
+  </div>
+  <figure class="wide-figure">
+    <img src="images/occlusion_sweep.png" alt="Three line plots against occlusion percentage: BlobBoards keep near-constant rotation and translation error while AprilTag and ArUco error explodes past 10 percent occlusion; BlobBoards detection rate decays gradually to 90 percent occlusion while the tag systems drop to zero by 30 percent." width="1600" height="533">
+    <figcaption>Occlusion sweep: relative rotation error, absolute translation error, and detection rate as a growing fraction of each board is masked. Tag systems lose their corners and stop detecting; BlobBoards register from whatever blobs remain.</figcaption>
+  </figure>
+  <div class="results-grid">
+    <figure>
+      <img src="images/occlusion.jpg" alt="The board rig in the lab with 70 percent of each board covered by a grey mask." width="960" height="641">
+      <figcaption>The rig at 70% occlusion.</figcaption>
+    </figure>
+    <div class="results-text">
+      <p>The sweep masks a growing fraction of every board on the rig, from 0% to 90% in steps of 10%, and re-runs all three systems on the same images. A tag system needs its full border to decode an identity and its four corners to solve a pose, so once the mask reaches a corner it fails outright. A BlobBoard is identified and posed from whichever of its hundreds of blobs are still visible: the detection rate declines gradually, and the boards that are found keep essentially the same pose error as the unoccluded ones.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================================================== getting started -->
+<section id="getting-started" class="container">
+  <h2 class="section-title">Getting Started</h2>
+  <div class="prose">
+    <ol>
+      <li>
+        <p>Install BlobBoards using the selector above (pixi brings Julia, Python, and Ghostscript with it), or follow the <a href="https://github.com/prittjam/BlobBoards.jl#installation">manual setup</a>.</p>
+      </li>
+      <li>
+        <p>Generate and print a board. The PDF is vector, carries rulers for checking the print scale, and comes with a JSON sidecar holding the full configuration and every blob's coordinates.</p>
+<pre><code><span class="k">using</span> BlobBoards
+
+<span class="c"># A4 board at 300 dpi, smallest blob σ = 1 mm → board PDF + JSON in ./out</span>
+blob_board(<span class="k">"A4"</span>, 300dpi; min_scale = 1.0mm, seed = 0xBEEF, dir = <span class="k">"./out"</span>)
+
+<span class="c"># Or a pixel pattern for simulation and training</span>
+blob_pattern(800, 600; min_scale = 3px, seed = 0x1234, dir = <span class="k">"./out"</span>)</code></pre>
+        <p>Print at 100% scale; pass <code>board_size</code> if your printer scales the page.</p>
+      </li>
+      <li>
+        <p>Detect boards and estimate their pose. The bundled example runs both the calibrated (P3P) and uncalibrated (homography) paths on images fetched from Hugging Face through the package's artifact catalog &mdash; no dataset setup. It targets a CUDA GPU, so it runs from the <code>dev</code> environment; the pipeline itself defaults to the CPU.</p>
+<pre><code>julia --project=dev -e <span class="k">'using Pkg; Pkg.instantiate()'</span>
+julia --project=dev examples/pipeline/find_boards.jl</code></pre>
+        <p>In your own code the whole chain is one call:</p>
+<pre><code>accepted = find_boards(gray_image, boards, network;
+                       board_bundles = bundles, config, device = CUDABackend())
+<span class="k">for</span> (uid, pose, _, _) <span class="k">in</span> accepted
+    <span class="c"># pose.R, pose.t: board → camera</span>
+<span class="k">end</span></code></pre>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============================================================= support -->
+<section id="support" class="container">
+  <h2 class="section-title">Support</h2>
+  <div class="prose">
+    <p>Please use the <a href="https://github.com/prittjam/BlobBoards.jl/issues">GitHub issue tracker</a> for bug reports, questions, and feature requests. The <a href="https://github.com/prittjam/BlobBoards.jl/tree/master/examples">examples</a> directory has runnable Julia scripts for generation, detection, tracking, and building training tracks; <a href="https://github.com/prittjam/BlobBoards.jl/tree/master/python/examples">python/examples</a> covers the Python package.</p>
+  </div>
+</section>
+
+<!-- ============================================================ citation -->
+<section id="citation" class="container">
+  <h2 class="section-title">Citation</h2>
+  <div class="prose">
+    <p>BlobBoards is described in <em>BlobBoards: Robust Markers for Accurate Pose</em>, BMVC 2026 (<a href="blobboards_bmvc2026.pdf">PDF, with supplementary material</a>). If you use this project for your research, please cite:</p>
+<pre><code>@inproceedings{pritts2026blobboards,
+  author    = {Pritts, James and Sittart, Till and Sauer, Hendrik and
+               Jan{\ss}en, Silja and Seegr{\"a}ber, Felix and
+               Nakath, David and K{\"o}ser, Kevin},
+  title     = {{BlobBoards}: Robust Markers for Accurate Pose},
+  booktitle = {British Machine Vision Conference (BMVC)},
+  year      = {2026},
+}</code></pre>
+    <p>The paper's LaTeX source, figures, and evaluation scripts live in <a href="https://github.com/prittjam/BlobBoards.jl/tree/master/bmvc2026">bmvc2026/</a> in the repository.</p>
+  </div>
+</section>
+
+<!-- ====================================================== acknowledgments -->
+<section id="acknowledgments" class="container">
+  <h2 class="section-title">Acknowledgments</h2>
+  <div class="prose">
+    <p>BlobBoards is developed by James Pritts with Till Sittart, Hendrik Sauer, Silja Janßen, Felix Seegräber, David Nakath, and Kevin Köser at Marine Data Science, Kiel University.</p>
+    <p>James Pritts is funded by Kiel Training for Excellence, an EU Horizon Europe programme under the Marie Skłodowska-Curie Actions (MSCA), grant agreement No. 101081480. The motion-capture setup was funded through the project <em>OP der Zukunft</em> as part of the REACT-EU program and provided by the Kurt Semm Centre for laparoscopic and robot-assisted surgery at the University Hospital of Schleswig-Holstein.</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="container">
+    <p>BlobBoards.jl is released under the MIT License.</p>
+    <p><a href="https://github.com/prittjam/BlobBoards.jl">Source on GitHub</a> &middot; <a href="https://github.com/prittjam/BlobBoards.jl/tree/master/docs/src">Documentation</a> &middot; <a href="blobboards_bmvc2026.pdf">Paper (PDF)</a> &middot; <a href="#citation">BibTeX</a></p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  // ---------------------------------------------------------- theme toggle
+  var root = document.documentElement;
+  var btn = document.getElementById('theme-toggle');
+  var KEY = 'bb-theme';
+  var order = ['auto', 'light', 'dark'];
+  var titles = { auto: 'Color mode: system', light: 'Color mode: light', dark: 'Color mode: dark' };
+  function apply(mode, persist) {
+    if (mode === 'auto') root.removeAttribute('data-theme');
+    else root.setAttribute('data-theme', mode);
+    btn.setAttribute('data-mode', mode);
+    btn.title = titles[mode];
+    if (persist) { try { localStorage.setItem(KEY, mode); } catch (e) {} }
+  }
+  var stored = null;
+  try { stored = localStorage.getItem(KEY); } catch (e) {}
+  if (stored && order.indexOf(stored) >= 0) apply(stored, false);
+  else btn.setAttribute('data-mode', root.getAttribute('data-theme') || 'auto');
+  btn.addEventListener('click', function () {
+    var cur = btn.getAttribute('data-mode') || 'auto';
+    apply(order[(order.indexOf(cur) + 1) % order.length], true);
+  });
+
+  // ------------------------------------------------------ install selector
+  var CLONE = 'git clone https://github.com/prittjam/BlobBoards.jl && cd BlobBoards.jl';
+  var RECIPES = {
+    'julia|pixi': {
+      prompt: '$',
+      cmd: CLONE + ' && pixi install && pixi run julia --project=.',
+      note: 'pixi installs Julia, Python, and Ghostscript and resolves the package environment. Then `using BlobBoards`.'
+    },
+    'julia|pkg': {
+      prompt: 'julia>',
+      cmd: 'using Pkg; Pkg.Registry.add(RegistrySpec(url = "git@github.com:prittjam/CauRegistry.jl.git")); Pkg.add("BlobBoards")',
+      note: 'BlobBoards is published in CauRegistry, not General; adding it needs SSH access to the prittjam organization. Requires Julia 1.12+ and Ghostscript for PDF compression.'
+    },
+    'python|pixi': {
+      prompt: '$',
+      cmd: CLONE + ' && pixi install && pixi run python python/examples/boards/generate_a4_board.py',
+      note: 'pixi installs the `blobboards` Python package together with the Julia core; the example writes an A4 board to ./output.'
+    },
+    'python|pip': {
+      prompt: '$',
+      cmd: CLONE + ' && cd python && pip install -e .',
+      note: 'Installs `blobboards` with its `juliacall` and `numpy` dependencies into your current Python environment.'
+    }
+  };
+  var COMPAT = { julia: ['pixi', 'pkg'], python: ['pixi', 'pip'] };
+  var state = { lang: 'julia', method: 'pixi' };
+  var cis = document.getElementById('cis');
+  var langBtns = cis.querySelectorAll('[data-lang]');
+  var methodBtns = cis.querySelectorAll('[data-method]');
+  var cmdEl = document.getElementById('cis-cmd');
+  var promptEl = document.getElementById('cis-prompt');
+  var noteEl = document.getElementById('cis-note');
+  var copyBtn = document.getElementById('cis-copy');
+
+  function render() {
+    var ok = COMPAT[state.lang];
+    if (ok.indexOf(state.method) < 0) state.method = ok[0];
+    langBtns.forEach(function (b) { b.classList.toggle('active', b.dataset.lang === state.lang); });
+    methodBtns.forEach(function (b) {
+      var allowed = ok.indexOf(b.dataset.method) >= 0;
+      b.disabled = !allowed;
+      b.classList.toggle('active', allowed && b.dataset.method === state.method);
+    });
+    var r = RECIPES[state.lang + '|' + state.method];
+    cmdEl.textContent = r.cmd;
+    promptEl.textContent = r.prompt + ' ';
+    noteEl.textContent = r.note;
+    copyBtn.textContent = 'Copy';
+  }
+  langBtns.forEach(function (b) { b.addEventListener('click', function () { state.lang = b.dataset.lang; render(); }); });
+  methodBtns.forEach(function (b) { b.addEventListener('click', function () { if (!b.disabled) { state.method = b.dataset.method; render(); } }); });
+  copyBtn.addEventListener('click', function () {
+    var text = cmdEl.textContent;
+    function done(ok) { copyBtn.textContent = ok ? 'Copied' : 'Select to copy'; setTimeout(function () { copyBtn.textContent = 'Copy'; }, 1800); }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(false); });
+    } else {
+      done(false);
+    }
+  });
+  render();
+})();
+</script>
+</body>
+</html>
