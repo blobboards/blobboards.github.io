@@ -173,7 +173,8 @@ h1, h2, h3 { line-height: 1.2; text-wrap: balance; }
 .pill svg { width: 1rem; height: 1rem; }
 
 figure { margin: 0; }
-.hero-figure { max-width: 960px; margin: 2rem auto 1rem; padding: 0 1.25rem; text-align: center; }
+.hero-figure { max-width: 1040px; margin: 2rem auto 1rem; padding: 0 1.25rem; text-align: center; }
+.hero-figure img { width: 100%; border: 0; border-radius: 0; background: transparent; }
 .abstract p { font-family: var(--bb-serif); font-size: 1.1rem; line-height: 1.7; text-align: justify; hyphens: auto; }
 
 /* ------------------------------------------------------------------ method --- */
@@ -375,7 +376,10 @@ footer p { margin: 0.25rem 0; }
 
 <section id="teaser">
   <figure class="hero-figure">
-    <img src="images/teaser.jpg" alt="A cluttered scene with twenty-five BlobBoards at many distances and angles, each outlined in a distinct colour with its blob pattern re-projected onto the board." width="1800" height="545">
+    <picture>
+      <source srcset="images/teaser.webp" type="image/webp">
+      <img src="images/teaser.png" alt="A cluttered scene with twenty-five BlobBoards at many distances and angles, each outlined in a distinct colour with its blob pattern re-projected onto the board." width="1800" height="545">
+    </picture>
     <figcaption>
       All 25 BlobBoards in the image are detected, identified, and registered
       against a 50-board gallery &mdash; 25 of its entries are absent confusers,
