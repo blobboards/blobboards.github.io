@@ -266,14 +266,6 @@ section { scroll-margin-top: 4.5rem; }
 .stat__value { font-size: 2rem; font-weight: 800; color: var(--bb-primary); font-variant-numeric: tabular-nums; line-height: 1.1; letter-spacing: -0.01em; }
 .stat__value small { font-size: 1rem; font-weight: 600; color: var(--bb-muted); margin-left: 0.15rem; }
 .stat__label { color: var(--bb-muted); font-size: 0.9rem; margin-top: 0.35rem; }
-.wide-figure { margin-bottom: 1.5rem; }
-.wide-figure img { width: 100%; border-radius: 0.5rem; border: 1px solid var(--bb-border); background: #fff; }
-.wide-figure figcaption { max-width: 720px; margin-left: auto; margin-right: auto; }
-.results-grid { display: grid; grid-template-columns: 2fr 3fr; gap: 1.5rem; align-items: center; }
-.results-grid img { width: 100%; border-radius: 0.5rem; border: 1px solid var(--bb-border); background: #fff; }
-.results-grid figcaption { text-align: left; }
-.results-text p { margin: 0; color: var(--bb-muted); font-size: 0.97rem; }
-@media (max-width: 760px) { .results-grid { grid-template-columns: 1fr; } }
 
 /* ---------------------------------------------------------------- footer --- */
 footer {
@@ -557,19 +549,6 @@ footer p { margin: 0.25rem 0; }
     <div class="stat">
       <div class="stat__value">69<small>%</small></div>
       <div class="stat__label">boards still detected at 50% occlusion, with essentially unchanged median translation error; AprilTag and ArUco detect none</div>
-    </div>
-  </div>
-  <figure class="wide-figure">
-    <img src="images/occlusion_sweep.png" alt="Three line plots against occlusion percentage: BlobBoards keep near-constant rotation and translation error while AprilTag and ArUco error explodes past 10 percent occlusion; BlobBoards detection rate decays gradually to 90 percent occlusion while the tag systems drop to zero by 30 percent." width="1600" height="533">
-    <figcaption>Occlusion sweep: relative rotation error, absolute translation error, and detection rate as a growing fraction of each board is masked. Tag systems lose their corners and stop detecting; BlobBoards register from whatever blobs remain.</figcaption>
-  </figure>
-  <div class="results-grid">
-    <figure>
-      <img src="images/occlusion.jpg" alt="The board rig in the lab with 70 percent of each board covered by a grey mask." width="960" height="641">
-      <figcaption>The rig at 70% occlusion.</figcaption>
-    </figure>
-    <div class="results-text">
-      <p>The sweep masks a growing fraction of every board on the rig, from 0% to 90% in steps of 10%, and re-runs all three systems on the same images. A tag system needs its full border to decode an identity and its four corners to solve a pose, so once the mask reaches a corner it fails outright. A BlobBoard is identified and posed from whichever of its hundreds of blobs are still visible: the detection rate declines gradually, and the boards that are found keep essentially the same pose error as the unoccluded ones.</p>
     </div>
   </div>
 </section>
