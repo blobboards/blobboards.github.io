@@ -235,6 +235,14 @@ section { scroll-margin-top: 4.5rem; }
 }
 .cis__copy:hover { background: var(--bb-primary); color: var(--bb-on-surface); }
 .cis__note { margin: 0.75rem 0 0; font-size: 0.88rem; color: var(--bb-muted); }
+.codebox { position: relative; }
+.copy-btn {
+  position: absolute; top: 0.55rem; right: 0.6rem; z-index: 1;
+  cursor: pointer; padding: 0.3rem 0.75rem; border-radius: 0.4rem;
+  border: 1px solid var(--bb-primary); background: var(--bb-bg); color: var(--bb-primary);
+  font: inherit; font-size: 0.8rem; font-weight: 600;
+}
+.copy-btn:hover { background: var(--bb-primary); color: var(--bb-on-surface); }
 .install-more { text-align: center; color: var(--bb-muted); font-size: 0.95rem; }
 @media (max-width: 500px) {
   .cis__row { flex-direction: column; gap: 0.4rem; }
@@ -601,7 +609,9 @@ julia --project=dev examples/pipeline/find_boards.jl</code></pre>
   <h2 class="section-title">Citation</h2>
   <div class="prose">
     <p>BlobBoards is described in <em>BlobBoards: Robust Markers for Accurate Pose</em>, BMVC 2026 (<a href="blobboards_bmvc2026.pdf">PDF, with supplementary material</a>). If you use this project for your research, please cite:</p>
-<pre><code>@inproceedings{pritts2026blobboards,
+<div class="codebox">
+  <button class="copy-btn" type="button" data-copy="bibtex" aria-label="Copy BibTeX to clipboard">Copy BibTeX</button>
+<pre id="bibtex"><code>@inproceedings{pritts2026blobboards,
   author    = {Pritts, James and Sittart, Till and Sauer, Hendrik and
                Jan{\ss}en, Silja and Seegr{\"a}ber, Felix and
                Nakath, David and K{\"o}ser, Kevin},
@@ -609,6 +619,7 @@ julia --project=dev examples/pipeline/find_boards.jl</code></pre>
   booktitle = {British Machine Vision Conference (BMVC)},
   year      = {2026},
 }</code></pre>
+</div>
     <p>The paper's LaTeX source, figures, and evaluation scripts live in <a href="https://github.com/prittjam/BlobBoards.jl/tree/master/bmvc2026">bmvc2026/</a> in the repository.</p>
   </div>
 </section>
@@ -706,16 +717,25 @@ julia --project=dev examples/pipeline/find_boards.jl</code></pre>
   }
   langBtns.forEach(function (b) { b.addEventListener('click', function () { state.lang = b.dataset.lang; render(); }); });
   methodBtns.forEach(function (b) { b.addEventListener('click', function () { if (!b.disabled) { state.method = b.dataset.method; render(); } }); });
-  copyBtn.addEventListener('click', function () {
-    var text = cmdEl.textContent;
-    function done(ok) { copyBtn.textContent = ok ? 'Copied' : 'Select to copy'; setTimeout(function () { copyBtn.textContent = 'Copy'; }, 1800); }
+  // Copy `text` to the clipboard and flash feedback on `btn`, restoring `label`.
+  function copyText(text, btn, label) {
+    function done(ok) { btn.textContent = ok ? 'Copied' : 'Select to copy'; setTimeout(function () { btn.textContent = label; }, 1800); }
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(false); });
     } else {
       done(false);
     }
-  });
+  }
+  copyBtn.addEventListener('click', function () { copyText(cmdEl.textContent, copyBtn, 'Copy'); });
   render();
+
+  // ------------------------------------------------------ copy buttons
+  document.querySelectorAll('.copy-btn[data-copy]').forEach(function (btn) {
+    var target = document.getElementById(btn.dataset.copy);
+    if (!target) return;
+    var label = btn.textContent;
+    btn.addEventListener('click', function () { copyText(target.textContent, btn, label); });
+  });
 })();
 </script>
 </body>
