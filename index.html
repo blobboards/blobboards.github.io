@@ -157,7 +157,8 @@ h1, h2, h3 { line-height: 1.2; text-wrap: balance; }
   display: inline-block; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
   color: var(--bb-primary); border: 1px solid var(--bb-primary); border-radius: 2rem; padding: 0.2rem 0.75rem; margin: 0 0 1rem;
 }
-.pub__authors { font-size: 1.1rem; margin: 0 0 0.2rem; line-height: 1.5; max-width: 720px; margin-left: auto; margin-right: auto; }
+.pub__authors { font-size: 1.1rem; margin: 0 auto 0.2rem; line-height: 1.5; max-width: 640px; text-wrap: balance; }
+.pub__authors span { white-space: nowrap; }
 .pub__affil { color: var(--bb-muted); margin: 0 0 1.4rem; }
 .pub__links { display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: center; }
 .pill {
@@ -350,7 +351,7 @@ footer p { margin: 0.25rem 0; }
     <p class="hero__tagline">Robust Markers for Accurate Pose</p>
     <div class="pub" id="publication">
       <p class="pub__venue">BMVC 2026</p>
-      <p class="pub__authors">James Pritts, Till Sittart, Hendrik Sauer, Silja Janßen, Felix Seegräber, David Nakath, Kevin Köser</p>
+      <p class="pub__authors"><span>James Pritts</span>, <span>Till Sittart</span>, <span>Hendrik Sauer</span>, <span>Silja Janßen</span>, <span>Felix Seegräber</span>, <span>David Nakath</span>, <span>Kevin Köser</span></p>
       <p class="pub__affil">Marine Data Science, Kiel University</p>
       <div class="pub__links">
         <a class="pill" href="blobboards_bmvc2026.pdf"><svg aria-hidden="true"><use href="#ic-pdf"/></svg>Paper</a>
