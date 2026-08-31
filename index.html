@@ -199,6 +199,9 @@ section { scroll-margin-top: 4.5rem; }
 .prose ol { padding-left: 1.4rem; margin: 0; }
 .prose ol > li { margin-bottom: 1.25rem; }
 .prose ol > li > p { margin: 0 0 0.6rem; }
+.prose h3 { font-size: 1.2rem; font-weight: 700; margin: 2rem 0 0.6rem; }
+.prose ul { padding-left: 1.4rem; margin: 0 0 1rem; }
+.prose ul > li { margin-bottom: 0.6rem; }
 .prose pre { margin-top: 0.5rem; }
 
 /* ---------------------------------------------------------------- install --- */
@@ -264,6 +267,8 @@ section { scroll-margin-top: 4.5rem; }
 .card h3 { font-size: 1.05rem; font-weight: 700; margin: 0 0 0.4rem; }
 .card p { color: var(--bb-muted); font-size: 0.95rem; margin: 0 0 0.9rem; flex: 1; }
 .card a { font-weight: 600; font-size: 0.92rem; }
+.card p a { font-weight: 500; font-size: inherit; }
+.card__links { display: flex; flex-wrap: wrap; gap: 0.4rem 1.1rem; }
 
 /* --------------------------------------------------------------- figures --- */
 .figrow { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; align-items: start; }
@@ -320,6 +325,16 @@ footer p { margin: 0.25rem 0; }
         <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
       </g>
     </symbol>
+    <symbol id="ic-data" viewBox="0 0 24 24">
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+      </g>
+    </symbol>
+    <symbol id="ic-model" viewBox="0 0 24 24">
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/>
+      </g>
+    </symbol>
   </defs>
 </svg>
 
@@ -336,6 +351,7 @@ footer p { margin: 0.25rem 0; }
       <a href="#features">Features</a>
       <a href="#method">Method</a>
       <a href="#results">Results</a>
+      <a href="#data">Data</a>
       <a href="#getting-started">Getting Started</a>
       <a href="https://github.com/prittjam/BlobBoards.jl/tree/master/docs/src">Docs</a>
     </nav>
@@ -370,6 +386,8 @@ footer p { margin: 0.25rem 0; }
         -->
         <a class="pill" href="https://github.com/prittjam/BlobBoards.jl" rel="noopener" target="_blank"><svg aria-hidden="true"><use href="#ic-github"/></svg>Code</a>
         <a class="pill" href="https://github.com/prittjam/BlobBoards.jl/tree/master/docs/src"><svg aria-hidden="true"><use href="#ic-book"/></svg>Docs</a>
+        <a class="pill" href="https://doi.org/10.5281/zenodo.21998311" title="Evaluation data and descriptor training set (Zenodo)" rel="noopener" target="_blank"><svg aria-hidden="true"><use href="#ic-data"/></svg>Data</a>
+        <a class="pill" href="https://huggingface.co/prittjam/blobboards-descriptor" title="Descriptor networks (Hugging Face)" rel="noopener" target="_blank"><svg aria-hidden="true"><use href="#ic-model"/></svg>Models</a>
         <a class="pill pill--accent" href="#getting-started">Get Started</a>
       </div>
     </div>
@@ -530,7 +548,7 @@ footer p { margin: 0.25rem 0; }
       <figcaption><b>Generate.</b> A seeded pattern packs blobs from several octaves of scale into one field. The same seed reproduces the same board, in Julia or Python.</figcaption>
     </figure>
     <figure>
-      <img src="images/adapted.jpg" alt="A stack of printed boards photographed obliquely; the top board has every blob outlined in teal with its fitted ellipse." width="960" height="720">
+      <img src="images/adapted.jpg" alt="A stack of printed boards photographed from above; the top board carries its recovered projection as a magenta frame, with every blob's adapted ellipse and centre marked." width="960" height="720">
       <figcaption><b>Adapt and register.</b> Each detected blob gets a fitted elliptical frame, is canonicalized into a patch, and described by a learned log-polar network. Matches to the reference pattern are spatially verified, so the correspondences determine pose and certify identity.</figcaption>
     </figure>
     <figure>
@@ -564,6 +582,24 @@ footer p { margin: 0.25rem 0; }
   </div>
 </section>
 
+<!-- ================================================================ data -->
+<section id="data" class="container">
+  <h2 class="section-title">Data &amp; Models</h2>
+  <p class="section-subtitle">The paper's data is frozen on Zenodo; the networks and example data the package ships live on Hugging Face.</p>
+  <div class="cards">
+    <article class="card">
+      <h3>Reproducing the BMVC results</h3>
+      <p>Everything the paper's numbers were computed from is archived at <a href="https://doi.org/10.5281/zenodo.21998311" rel="noopener" target="_blank">doi:10.5281/zenodo.21998311</a>: the absolute-pose captures with camera calibrations, motion-capture ground truth, and hand-eye calibrations; the AprilTag and ArUco baseline detections; the 0&ndash;90% occlusion series; the frozen descriptor training set; and the network the reported poses were produced with. It is packaged as sha256-pinned Julia artifact tarballs that <code>bmvc2026/Artifacts.toml</code> fetches lazily, so the evaluation scripts download only the tiers they need.</p>
+      <div class="card__links"><a href="https://zenodo.org/records/21998311" rel="noopener" target="_blank">Zenodo record</a><a href="https://github.com/prittjam/BlobBoards.jl/tree/master/bmvc2026">Evaluation scripts</a></div>
+    </article>
+    <article class="card">
+      <h3>Production networks and ongoing development</h3>
+      <p>What the package itself runs on comes from Hugging Face. <a href="https://huggingface.co/prittjam/blobboards-descriptor" rel="noopener" target="_blank">blobboards-descriptor</a> holds the ONNX descriptor networks; the package's <code>Artifacts.toml</code> is an add-only, commit-pinned catalog of them, so a config always names the same bytes and newer networks arrive as new entries. <a href="https://huggingface.co/datasets/prittjam/blobboards-examples" rel="noopener" target="_blank">blobboards-examples</a> holds the boards, still image, and video the bundled examples run on.</p>
+      <div class="card__links"><a href="https://huggingface.co/prittjam/blobboards-descriptor" rel="noopener" target="_blank">Descriptor networks</a><a href="https://huggingface.co/datasets/prittjam/blobboards-examples" rel="noopener" target="_blank">Example data</a></div>
+    </article>
+  </div>
+</section>
+
 <!-- ====================================================== getting started -->
 <section id="getting-started" class="container">
   <h2 class="section-title">Getting Started</h2>
@@ -584,7 +620,7 @@ blob_pattern(800, 600; min_scale = 3px, seed = 0x1234, dir = <span class="k">"./
         <p>Print at 100% scale; pass <code>board_size</code> if your printer scales the page.</p>
       </li>
       <li>
-        <p>Detect boards and estimate their pose. The bundled example runs both the calibrated (P3P) and uncalibrated (homography) paths on images fetched from Hugging Face through the package's artifact catalog &mdash; no dataset setup. It targets a CUDA GPU, so it runs from the <code>dev</code> environment; the pipeline itself defaults to the CPU.</p>
+        <p>Detect boards and estimate their pose. The bundled example runs both the calibrated (P3P) and uncalibrated (homography) paths on images fetched from <a href="https://huggingface.co/datasets/prittjam/blobboards-examples" rel="noopener" target="_blank">Hugging Face</a> through the package's artifact catalog &mdash; no dataset setup. It targets a CUDA GPU, so it runs from the <code>dev</code> environment; the pipeline itself defaults to the CPU.</p>
 <pre><code>julia --project=dev -e <span class="k">'using Pkg; Pkg.instantiate()'</span>
 julia --project=dev examples/pipeline/find_boards.jl</code></pre>
         <p>In your own code the whole chain is one call:</p>
@@ -622,7 +658,81 @@ julia --project=dev examples/pipeline/find_boards.jl</code></pre>
   year      = {2026},
 }</code></pre>
 </div>
-    <p>The paper's LaTeX source, figures, and evaluation scripts live in <a href="https://github.com/prittjam/BlobBoards.jl/tree/master/bmvc2026">bmvc2026/</a> in the repository.</p>
+    <p>The paper's LaTeX source, figures, and evaluation scripts live in <a href="https://github.com/prittjam/BlobBoards.jl/tree/master/bmvc2026">bmvc2026/</a> in the repository; the data they evaluate is archived on Zenodo as <a href="https://doi.org/10.5281/zenodo.21998311" rel="noopener" target="_blank">doi:10.5281/zenodo.21998311</a> (see <a href="#data">Data &amp; Models</a>).</p>
+
+    <h3 id="solver-citations">Citing the solvers</h3>
+    <p>Two opt-in settings of <code>find_boards</code> run minimal solvers from the literature, selected through <code>FindBoardsConfig(geometry = &hellip;)</code>. If you use either, cite the solver as well as the paper:</p>
+    <ul>
+      <li><b>Calibrated pose</b> &mdash; <code>PoseGeometry(camera; outlier_halfwidth = 5.0, min_inliers = 6, resolve_pose_ambiguity = false)</code> estimates absolute pose by P3P with the solver of Ding, Yang, Larsson, Olsson, and &Aring;str&ouml;m (CVPR 2023), ported from <a href="https://github.com/PoseLib/PoseLib" rel="noopener" target="_blank">PoseLib</a>; cite both. <code>resolve_pose_ambiguity = true</code> additionally uses the planar-target disambiguation of Schweighofer and Pinz (PAMI 2006).</li>
+      <li><b>Homography with radial distortion</b> &mdash; <code>RadialHomographyGeometry((width, height); outlier_halfwidth = 5.0, min_inliers = 7)</code> is the uncalibrated <i>(H,&thinsp;k)</i> path for an unknown lens: the one-sided five-point solver of Wadenb&auml;ck, Valtonen &Ouml;rnhag, and Edstedt (3DV 2026), ported from <a href="https://github.com/marcusvaltonen/HomLib" rel="noopener" target="_blank">HomLib</a>, under the division distortion model of Fitzgibbon (CVPR 2001). <code>calibrate(images, boards, network; config, board_bundles, ncoef = 1)</code> runs the same arm over many images and estimates the shared focal length and division coefficients as BabelCalib does (Lochman et al., ICCV 2021).</li>
+    </ul>
+<pre><code><span class="c"># Calibrated: absolute pose by P3P (Ding et al. 2023, PoseLib)</span>
+config = FindBoardsConfig(geometry = PoseGeometry(camera; min_inliers = 6))
+
+<span class="c"># Uncalibrated, unknown lens: (H, k) by the 5-point radial solver</span>
+<span class="c"># (Wadenbäck et al. 2026)</span>
+config = FindBoardsConfig(geometry = RadialHomographyGeometry((width, height);
+                                                              min_inliers = 7))
+accepted = find_boards(gray_image, boards, network;
+                       board_bundles = bundles, config)
+
+<span class="c"># Camera calibration from many images on the radial arm (Lochman et al. 2021)</span>
+calibration, observations = calibrate(images, boards, network;
+                                      config, board_bundles = bundles, ncoef = 1)</code></pre>
+<div class="codebox">
+  <button class="copy-btn" type="button" data-copy="bibtex-solvers" aria-label="Copy solver BibTeX to clipboard">Copy BibTeX</button>
+<pre id="bibtex-solvers"><code>@inproceedings{ding2023p3p,
+  author    = {Ding, Yaqing and Yang, Jian and Larsson, Viktor and
+               Olsson, Carl and {\AA}str{\"o}m, Kalle},
+  title     = {Revisiting the {P3P} Problem},
+  booktitle = {IEEE/CVF Conference on Computer Vision and
+               Pattern Recognition (CVPR)},
+  pages     = {4872--4880},
+  year      = {2023},
+}
+
+@misc{poselib,
+  title     = {{PoseLib} -- Minimal Solvers for Camera Pose Estimation},
+  author    = {Larsson, Viktor and contributors},
+  url       = {https://github.com/PoseLib/PoseLib},
+  year      = {2020},
+}
+
+@article{schweighofer2006robust,
+  author    = {Schweighofer, Gerald and Pinz, Axel},
+  title     = {Robust Pose Estimation from a Planar Target},
+  journal   = {IEEE Transactions on Pattern Analysis and Machine Intelligence},
+  volume    = {28},
+  number    = {12},
+  pages     = {2024--2030},
+  year      = {2006},
+}
+
+@inproceedings{wadenback2026radial,
+  author    = {Wadenb{\"a}ck, M{\aa}rten and Valtonen {\"O}rnhag, Marcus and
+               Edstedt, Johan},
+  title     = {Radially Distorted Homographies, Revisited},
+  booktitle = {International Conference on 3D Vision (3DV)},
+  year      = {2026},
+}
+
+@inproceedings{fitzgibbon2001simultaneous,
+  author    = {Fitzgibbon, Andrew W.},
+  title     = {Simultaneous Linear Estimation of Multiple View Geometry and
+               Lens Distortion},
+  booktitle = {IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
+  year      = {2001},
+}
+
+@inproceedings{lochman2021babelcalib,
+  author    = {Lochman, Yaroslava and Liepieshov, Kostiantyn and Chen, Jianhui and
+               Perdoch, Michal and Zach, Christopher and Pritts, James},
+  title     = {{BabelCalib}: A Universal Approach to Calibrating Central Cameras},
+  booktitle = {IEEE/CVF International Conference on Computer Vision (ICCV)},
+  pages     = {15253--15262},
+  year      = {2021},
+}</code></pre>
+</div>
   </div>
 </section>
 
@@ -640,7 +750,7 @@ julia --project=dev examples/pipeline/find_boards.jl</code></pre>
 <footer>
   <div class="container">
     <p>BlobBoards.jl is released under the MIT License.</p>
-    <p><a href="https://github.com/prittjam/BlobBoards.jl">Source on GitHub</a> &middot; <a href="https://github.com/prittjam/BlobBoards.jl/tree/master/docs/src">Documentation</a> &middot; <a href="blobboards_bmvc2026.pdf">Paper (PDF)</a> &middot; <a href="#citation">BibTeX</a></p>
+    <p><a href="https://github.com/prittjam/BlobBoards.jl">Source on GitHub</a> &middot; <a href="https://github.com/prittjam/BlobBoards.jl/tree/master/docs/src">Documentation</a> &middot; <a href="blobboards_bmvc2026.pdf">Paper (PDF)</a> &middot; <a href="https://doi.org/10.5281/zenodo.21998311">Data (Zenodo)</a> &middot; <a href="https://huggingface.co/prittjam/blobboards-descriptor">Models (Hugging Face)</a> &middot; <a href="#citation">BibTeX</a></p>
   </div>
 </footer>
 
