@@ -661,24 +661,19 @@ julia --project=dev examples/pipeline/find_boards.jl</code></pre>
     <p>The paper's LaTeX source, figures, and evaluation scripts live in <a href="https://github.com/prittjam/BlobBoards.jl/tree/master/bmvc2026">bmvc2026/</a> in the repository; the data they evaluate is archived on Zenodo as <a href="https://doi.org/10.5281/zenodo.21998311" rel="noopener" target="_blank">doi:10.5281/zenodo.21998311</a> (see <a href="#data">Data &amp; Models</a>).</p>
 
     <h3 id="solver-citations">Citing the solvers</h3>
-    <p>Two opt-in settings of <code>find_boards</code> run minimal solvers from the literature, selected through <code>FindBoardsConfig(geometry = &hellip;)</code>. If you use either, cite the solver as well as the paper:</p>
+    <p>The default homography path needs no additional citation. Two opt-in settings of <code>find_boards</code>, selected through <code>FindBoardsConfig(geometry = &hellip;)</code>, run published minimal solvers &mdash; if you use one, cite its solver:</p>
     <ul>
-      <li><b>Calibrated pose</b> &mdash; <code>PoseGeometry(camera; outlier_halfwidth = 5.0, min_inliers = 6, resolve_pose_ambiguity = false)</code> estimates absolute pose by P3P with the solver of Ding, Yang, Larsson, Olsson, and &Aring;str&ouml;m (CVPR 2023), ported from <a href="https://github.com/PoseLib/PoseLib" rel="noopener" target="_blank">PoseLib</a>; cite both. <code>resolve_pose_ambiguity = true</code> additionally uses the planar-target disambiguation of Schweighofer and Pinz (PAMI 2006).</li>
-      <li><b>Homography with radial distortion</b> &mdash; <code>RadialHomographyGeometry((width, height); outlier_halfwidth = 5.0, min_inliers = 7)</code> is the uncalibrated <i>(H,&thinsp;k)</i> path for an unknown lens: the one-sided five-point solver of Wadenb&auml;ck, Valtonen &Ouml;rnhag, and Edstedt (3DV 2026), ported from <a href="https://github.com/marcusvaltonen/HomLib" rel="noopener" target="_blank">HomLib</a>, under the division distortion model of Fitzgibbon (CVPR 2001). <code>calibrate(images, boards, network; config, board_bundles, ncoef = 1)</code> runs the same arm over many images and estimates the shared focal length and division coefficients as BabelCalib does (Lochman et al., ICCV 2021).</li>
+      <li><b>Calibrated pose</b> &mdash; <code>PoseGeometry(camera; outlier_halfwidth = 5.0, min_inliers = 6)</code> estimates absolute pose by P3P with the solver of Ding et al. (CVPR 2023), ported from <a href="https://github.com/PoseLib/PoseLib" rel="noopener" target="_blank">PoseLib</a>.</li>
+      <li><b>Homography with radial distortion</b> &mdash; <code>RadialHomographyGeometry((width, height); outlier_halfwidth = 5.0, min_inliers = 7)</code> estimates the uncalibrated <i>(H,&thinsp;k)</i> model for an unknown lens with the one-sided five-point solver of Wadenb&auml;ck et al. (3DV 2026), ported from <a href="https://github.com/marcusvaltonen/HomLib" rel="noopener" target="_blank">HomLib</a>.</li>
     </ul>
-<pre><code><span class="c"># Calibrated: absolute pose by P3P (Ding et al. 2023, PoseLib)</span>
+<pre><code><span class="c"># Calibrated: absolute pose by P3P — cite Ding et al. 2023</span>
 config = FindBoardsConfig(geometry = PoseGeometry(camera; min_inliers = 6))
 
-<span class="c"># Uncalibrated, unknown lens: (H, k) by the 5-point radial solver</span>
-<span class="c"># (Wadenbäck et al. 2026)</span>
+<span class="c"># Uncalibrated, unknown lens: (H, k) — cite Wadenbäck et al. 2026</span>
 config = FindBoardsConfig(geometry = RadialHomographyGeometry((width, height);
                                                               min_inliers = 7))
 accepted = find_boards(gray_image, boards, network;
-                       board_bundles = bundles, config)
-
-<span class="c"># Camera calibration from many images on the radial arm (Lochman et al. 2021)</span>
-calibration, observations = calibrate(images, boards, network;
-                                      config, board_bundles = bundles, ncoef = 1)</code></pre>
+                       board_bundles = bundles, config)</code></pre>
 <div class="codebox">
   <button class="copy-btn" type="button" data-copy="bibtex-solvers" aria-label="Copy solver BibTeX to clipboard">Copy BibTeX</button>
 <pre id="bibtex-solvers"><code>@inproceedings{ding2023p3p,
@@ -691,46 +686,12 @@ calibration, observations = calibrate(images, boards, network;
   year      = {2023},
 }
 
-@misc{poselib,
-  title     = {{PoseLib} -- Minimal Solvers for Camera Pose Estimation},
-  author    = {Larsson, Viktor and contributors},
-  url       = {https://github.com/PoseLib/PoseLib},
-  year      = {2020},
-}
-
-@article{schweighofer2006robust,
-  author    = {Schweighofer, Gerald and Pinz, Axel},
-  title     = {Robust Pose Estimation from a Planar Target},
-  journal   = {IEEE Transactions on Pattern Analysis and Machine Intelligence},
-  volume    = {28},
-  number    = {12},
-  pages     = {2024--2030},
-  year      = {2006},
-}
-
 @inproceedings{wadenback2026radial,
   author    = {Wadenb{\"a}ck, M{\aa}rten and Valtonen {\"O}rnhag, Marcus and
                Edstedt, Johan},
   title     = {Radially Distorted Homographies, Revisited},
   booktitle = {International Conference on 3D Vision (3DV)},
   year      = {2026},
-}
-
-@inproceedings{fitzgibbon2001simultaneous,
-  author    = {Fitzgibbon, Andrew W.},
-  title     = {Simultaneous Linear Estimation of Multiple View Geometry and
-               Lens Distortion},
-  booktitle = {IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
-  year      = {2001},
-}
-
-@inproceedings{lochman2021babelcalib,
-  author    = {Lochman, Yaroslava and Liepieshov, Kostiantyn and Chen, Jianhui and
-               Perdoch, Michal and Zach, Christopher and Pritts, James},
-  title     = {{BabelCalib}: A Universal Approach to Calibrating Central Cameras},
-  booktitle = {IEEE/CVF International Conference on Computer Vision (ICCV)},
-  pages     = {15253--15262},
-  year      = {2021},
 }</code></pre>
 </div>
   </div>
