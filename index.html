@@ -201,7 +201,7 @@ section { scroll-margin-top: 4.5rem; }
 .prose ol > li > p { margin: 0 0 0.6rem; }
 .prose h3 { font-size: 1.2rem; font-weight: 700; margin: 2rem 0 0.6rem; }
 .prose ul { padding-left: 1.4rem; margin: 0 0 1rem; }
-.prose ul > li { margin-bottom: 0.6rem; }
+.prose ul > li { margin-bottom: 1.25rem; }
 .prose pre { margin-top: 0.5rem; }
 
 /* ---------------------------------------------------------------- install --- */
@@ -663,20 +663,11 @@ julia --project=dev examples/pipeline/find_boards.jl</code></pre>
     <h3 id="solver-citations">Citing the solvers</h3>
     <p>The default homography path needs no additional citation. Two opt-in settings of <code>find_boards</code>, selected through <code>FindBoardsConfig(geometry = &hellip;)</code>, run published minimal solvers &mdash; if you use one, cite its solver:</p>
     <ul>
-      <li><b>Calibrated pose</b> &mdash; <code>PoseGeometry(camera; outlier_halfwidth = 5.0, min_inliers = 6)</code> estimates absolute pose by P3P with the solver of Ding et al. (CVPR 2023), ported from <a href="https://github.com/PoseLib/PoseLib" rel="noopener" target="_blank">PoseLib</a>.</li>
-      <li><b>Homography with radial distortion</b> &mdash; <code>RadialHomographyGeometry((width, height); outlier_halfwidth = 5.0, min_inliers = 7)</code> estimates the uncalibrated <i>(H,&thinsp;k)</i> model for an unknown lens with the one-sided five-point solver of Wadenb&auml;ck et al. (3DV 2026), ported from <a href="https://github.com/marcusvaltonen/HomLib" rel="noopener" target="_blank">HomLib</a>.</li>
-    </ul>
-<pre><code><span class="c"># Calibrated: absolute pose by P3P — cite Ding et al. 2023</span>
-config = FindBoardsConfig(geometry = PoseGeometry(camera; min_inliers = 6))
-
-<span class="c"># Uncalibrated, unknown lens: (H, k) — cite Wadenbäck et al. 2026</span>
-config = FindBoardsConfig(geometry = RadialHomographyGeometry((width, height);
-                                                              min_inliers = 7))
-accepted = find_boards(gray_image, boards, network;
-                       board_bundles = bundles, config)</code></pre>
+      <li>
+        <p><b>Calibrated pose</b> &mdash; <code>PoseGeometry(camera; outlier_halfwidth = 5.0, min_inliers = 6)</code> estimates absolute pose by P3P with the solver of Ding et al. (CVPR 2023), ported from <a href="https://github.com/PoseLib/PoseLib" rel="noopener" target="_blank">PoseLib</a>.</p>
 <div class="codebox">
-  <button class="copy-btn" type="button" data-copy="bibtex-solvers" aria-label="Copy solver BibTeX to clipboard">Copy BibTeX</button>
-<pre id="bibtex-solvers"><code>@inproceedings{ding2023p3p,
+  <button class="copy-btn" type="button" data-copy="bibtex-p3p" aria-label="Copy P3P solver BibTeX to clipboard">Copy BibTeX</button>
+<pre id="bibtex-p3p"><code>@inproceedings{ding2023p3p,
   author    = {Ding, Yaqing and Yang, Jian and Larsson, Viktor and
                Olsson, Carl and {\AA}str{\"o}m, Kalle},
   title     = {Revisiting the {P3P} Problem},
@@ -684,9 +675,14 @@ accepted = find_boards(gray_image, boards, network;
                Pattern Recognition (CVPR)},
   pages     = {4872--4880},
   year      = {2023},
-}
-
-@inproceedings{wadenback2026radial,
+}</code></pre>
+</div>
+      </li>
+      <li>
+        <p><b>Homography with radial distortion</b> &mdash; <code>RadialHomographyGeometry((width, height); outlier_halfwidth = 5.0, min_inliers = 7)</code> estimates the uncalibrated <i>(H,&thinsp;k)</i> model for an unknown lens with the one-sided five-point solver of Wadenb&auml;ck et al. (3DV 2026), ported from <a href="https://github.com/marcusvaltonen/HomLib" rel="noopener" target="_blank">HomLib</a>.</p>
+<div class="codebox">
+  <button class="copy-btn" type="button" data-copy="bibtex-radial" aria-label="Copy radial homography solver BibTeX to clipboard">Copy BibTeX</button>
+<pre id="bibtex-radial"><code>@inproceedings{wadenback2026radial,
   author    = {Wadenb{\"a}ck, M{\aa}rten and Valtonen {\"O}rnhag, Marcus and
                Edstedt, Johan},
   title     = {Radially Distorted Homographies, Revisited},
@@ -694,6 +690,8 @@ accepted = find_boards(gray_image, boards, network;
   year      = {2026},
 }</code></pre>
 </div>
+      </li>
+    </ul>
   </div>
 </section>
 
