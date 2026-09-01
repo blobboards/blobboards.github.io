@@ -348,11 +348,11 @@ footer p { margin: 0.25rem 0; }
       <a href="#publication">Paper</a>
       <a href="#abstract">Abstract</a>
       <a href="#install">Install</a>
+      <a href="#getting-started">Getting Started</a>
       <a href="#features">Features</a>
       <a href="#method">Method</a>
       <a href="#results">Results</a>
       <a href="#data">Data</a>
-      <a href="#getting-started">Getting Started</a>
       <a href="https://github.com/prittjam/BlobBoards.jl/tree/master/docs/src">Docs</a>
     </nav>
     <div class="navicons">
@@ -470,6 +470,40 @@ footer p { margin: 0.25rem 0; }
     For manual setup (Julia 1.12+, Ghostscript) and the GPU environment, see the
     <a href="https://github.com/prittjam/BlobBoards.jl#installation">installation section of the README</a>.
   </p>
+</section>
+
+<!-- ====================================================== getting started -->
+<section id="getting-started" class="container">
+  <h2 class="section-title">Getting Started</h2>
+  <div class="prose">
+    <ol>
+      <li>
+        <p>Install BlobBoards using the selector above (pixi brings Julia, Python, and Ghostscript with it), or follow the <a href="https://github.com/prittjam/BlobBoards.jl#installation">manual setup</a>.</p>
+      </li>
+      <li>
+        <p>Generate and print a board. The PDF is vector, carries rulers for checking the print scale, and comes with a JSON sidecar holding the full configuration and every blob's coordinates.</p>
+<pre><code><span class="k">using</span> BlobBoards
+
+<span class="c"># A4 board at 300 dpi, smallest blob σ = 1 mm → board PDF + JSON in ./out</span>
+blob_board(<span class="k">"A4"</span>, 300dpi; min_scale = 1.0mm, seed = 0xBEEF, dir = <span class="k">"./out"</span>)
+
+<span class="c"># Or a pixel pattern for simulation and training</span>
+blob_pattern(800, 600; min_scale = 3px, seed = 0x1234, dir = <span class="k">"./out"</span>)</code></pre>
+        <p>Print at 100% scale; pass <code>board_size</code> if your printer scales the page.</p>
+      </li>
+      <li>
+        <p>Detect boards and estimate their pose. The bundled example runs both the calibrated (P3P) and uncalibrated (homography) paths on images fetched from <a href="https://huggingface.co/datasets/prittjam/blobboards-examples" rel="noopener" target="_blank">Hugging Face</a> through the package's artifact catalog &mdash; no dataset setup. It targets a CUDA GPU, so it runs from the <code>dev</code> environment; the pipeline itself defaults to the CPU.</p>
+<pre><code>julia --project=dev -e <span class="k">'using Pkg; Pkg.instantiate()'</span>
+julia --project=dev examples/pipeline/find_boards.jl</code></pre>
+        <p>In your own code the whole chain is one call:</p>
+<pre><code>accepted = find_boards(gray_image, boards, network;
+                       board_bundles = bundles, config, device = CUDABackend())
+<span class="k">for</span> (uid, pose, _, _) <span class="k">in</span> accepted
+    <span class="c"># pose.R, pose.t: board → camera</span>
+<span class="k">end</span></code></pre>
+      </li>
+    </ol>
+  </div>
 </section>
 
 <!-- ============================================================ features -->
@@ -597,40 +631,6 @@ footer p { margin: 0.25rem 0; }
       <p>What the package itself runs on comes from Hugging Face. <a href="https://huggingface.co/prittjam/blobboards-descriptor" rel="noopener" target="_blank">blobboards-descriptor</a> holds the ONNX descriptor networks; the package's <code>Artifacts.toml</code> is an add-only, commit-pinned catalog of them, so a config always names the same bytes and newer networks arrive as new entries. <a href="https://huggingface.co/datasets/prittjam/blobboards-examples" rel="noopener" target="_blank">blobboards-examples</a> holds the boards, still image, and video the bundled examples run on.</p>
       <div class="card__links"><a href="https://huggingface.co/prittjam/blobboards-descriptor" rel="noopener" target="_blank">Descriptor networks</a><a href="https://huggingface.co/datasets/prittjam/blobboards-examples" rel="noopener" target="_blank">Example data</a></div>
     </article>
-  </div>
-</section>
-
-<!-- ====================================================== getting started -->
-<section id="getting-started" class="container">
-  <h2 class="section-title">Getting Started</h2>
-  <div class="prose">
-    <ol>
-      <li>
-        <p>Install BlobBoards using the selector above (pixi brings Julia, Python, and Ghostscript with it), or follow the <a href="https://github.com/prittjam/BlobBoards.jl#installation">manual setup</a>.</p>
-      </li>
-      <li>
-        <p>Generate and print a board. The PDF is vector, carries rulers for checking the print scale, and comes with a JSON sidecar holding the full configuration and every blob's coordinates.</p>
-<pre><code><span class="k">using</span> BlobBoards
-
-<span class="c"># A4 board at 300 dpi, smallest blob σ = 1 mm → board PDF + JSON in ./out</span>
-blob_board(<span class="k">"A4"</span>, 300dpi; min_scale = 1.0mm, seed = 0xBEEF, dir = <span class="k">"./out"</span>)
-
-<span class="c"># Or a pixel pattern for simulation and training</span>
-blob_pattern(800, 600; min_scale = 3px, seed = 0x1234, dir = <span class="k">"./out"</span>)</code></pre>
-        <p>Print at 100% scale; pass <code>board_size</code> if your printer scales the page.</p>
-      </li>
-      <li>
-        <p>Detect boards and estimate their pose. The bundled example runs both the calibrated (P3P) and uncalibrated (homography) paths on images fetched from <a href="https://huggingface.co/datasets/prittjam/blobboards-examples" rel="noopener" target="_blank">Hugging Face</a> through the package's artifact catalog &mdash; no dataset setup. It targets a CUDA GPU, so it runs from the <code>dev</code> environment; the pipeline itself defaults to the CPU.</p>
-<pre><code>julia --project=dev -e <span class="k">'using Pkg; Pkg.instantiate()'</span>
-julia --project=dev examples/pipeline/find_boards.jl</code></pre>
-        <p>In your own code the whole chain is one call:</p>
-<pre><code>accepted = find_boards(gray_image, boards, network;
-                       board_bundles = bundles, config, device = CUDABackend())
-<span class="k">for</span> (uid, pose, _, _) <span class="k">in</span> accepted
-    <span class="c"># pose.R, pose.t: board → camera</span>
-<span class="k">end</span></code></pre>
-      </li>
-    </ol>
   </div>
 </section>
 
