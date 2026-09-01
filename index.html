@@ -1,5 +1,12 @@
 <!doctype html>
 <html lang="en">
+<!--
+  BlobBoards project site. Single-file static page: all CSS lives in the
+  <style> block, all JS in the <script> block at the end of <body>, icons are
+  inline SVG <symbol>s, and images/ holds the figures. Blocks marked
+  "BlobBoards-specific" can be deleted wholesale when reusing the page for
+  another project - or start from template.html, the content-free skeleton.
+-->
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -28,6 +35,9 @@
   --bb-hero-bg: #e8f3f7;
   --bb-serif: Castoro, "Iowan Old Style", "Palatino Linotype", Georgia, "Times New Roman", serif;
 }
+/* Dark palette. Written out twice BY DESIGN - once for system-dark (guarded
+   so a manual "light" choice wins), once for the manual toggle - keep the two
+   blocks in sync. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
@@ -47,6 +57,7 @@
     --bb-hero-bg: #182228;
   }
 }
+/* manual toggle (set by the theme-toggle JS) - same values as above */
 :root[data-theme="dark"] {
   color-scheme: dark;
   --bb-bg: #14181c;
@@ -174,13 +185,16 @@ h1, h2, h3 { line-height: 1.2; text-wrap: balance; }
 .pill--accent { background: var(--bb-primary); border-color: var(--bb-primary); color: var(--bb-on-surface); }
 .pill--accent:hover { color: var(--bb-on-surface); }
 .pill svg { width: 1rem; height: 1rem; }
+@media (max-width: 500px) {
+  .hero__title { font-size: 2.25rem; }
+}
 
 figure { margin: 0; }
 .hero-figure { max-width: 1040px; margin: 2rem auto 1rem; padding: 0 1.25rem; text-align: center; }
 .hero-figure img { width: 100%; border: 0; border-radius: 0; background: transparent; }
 .abstract p { font-family: var(--bb-serif); font-size: 1.1rem; line-height: 1.7; text-align: justify; hyphens: auto; }
 
-/* ------------------------------------------------------------------ method --- */
+/* ----------------- method: the 4-up pipeline figure row (project figure) --- */
 .pipe { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; }
 .pipe figure { text-align: center; }
 .pipe img { width: 100%; border-radius: 0.5rem; border: 1px solid var(--bb-border); background: #fff; }
@@ -204,7 +218,8 @@ section { scroll-margin-top: 4.5rem; }
 .prose ul > li { margin-bottom: 1.25rem; }
 .prose pre { margin-top: 0.5rem; }
 
-/* ---------------------------------------------------------------- install --- */
+/* ------- install: language/method selector (BlobBoards-specific: delete --- */
+/* ------- together with the #install section and the JS marked likewise) --- */
 .cis {
   max-width: 780px; margin: 0 auto 1rem;
   border: 1px solid var(--bb-border); border-radius: 0.75rem;
@@ -240,6 +255,13 @@ section { scroll-margin-top: 4.5rem; }
 }
 .cis__copy:hover { background: var(--bb-primary); color: var(--bb-on-surface); }
 .cis__note { margin: 0.75rem 0 0; font-size: 0.88rem; color: var(--bb-muted); }
+.install-more { text-align: center; color: var(--bb-muted); font-size: 0.95rem; }
+@media (max-width: 500px) {
+  .cis__row { flex-direction: column; gap: 0.4rem; }
+  .cis__label { flex: none; padding-top: 0; }
+}
+
+/* -------------------- codebox: a <pre> with a floating copy button ------ --- */
 .codebox { position: relative; }
 .copy-btn {
   position: absolute; top: 0.55rem; right: 0.6rem; z-index: 1;
@@ -248,12 +270,6 @@ section { scroll-margin-top: 4.5rem; }
   font: inherit; font-size: 0.8rem; font-weight: 600;
 }
 .copy-btn:hover { background: var(--bb-primary); color: var(--bb-on-surface); }
-.install-more { text-align: center; color: var(--bb-muted); font-size: 0.95rem; }
-@media (max-width: 500px) {
-  .cis__row { flex-direction: column; gap: 0.4rem; }
-  .cis__label { flex: none; padding-top: 0; }
-  .hero__title { font-size: 2.25rem; }
-}
 
 /* --------------------------------------------------------------- features --- */
 .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 1rem; }
@@ -270,13 +286,13 @@ section { scroll-margin-top: 4.5rem; }
 .card p a { font-weight: 500; font-size: inherit; }
 .card__links { display: flex; flex-wrap: wrap; gap: 0.4rem 1.1rem; }
 
-/* --------------------------------------------------------------- figures --- */
+/* ------------- figures: responsive row of captioned 4:3 figure tiles ---- --- */
 .figrow { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; align-items: start; }
 .figrow img { width: 100%; border-radius: 0.5rem; border: 1px solid var(--bb-border); background: #fff; aspect-ratio: 4 / 3; object-fit: cover; }
 .figrow figcaption { text-align: left; }
 .figrow figcaption b { color: var(--bb-text); }
 
-/* ---------------------------------------------------------------- results --- */
+/* --------------------------- results: the stat-tile row ----------------- --- */
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
 .stat { background: var(--bb-surface); border: 1px solid var(--bb-border); border-radius: 0.5rem; padding: 1rem 1.1rem; }
 .stat__value { font-size: 2rem; font-weight: 800; color: var(--bb-primary); font-variant-numeric: tabular-nums; line-height: 1.1; letter-spacing: -0.01em; }
@@ -715,7 +731,17 @@ julia --project=dev examples/pipeline/find_boards.jl</code></pre>
 
 <script>
 (function () {
-  // ---------------------------------------------------------- theme toggle
+  // ---------------- shared: copy `text` to the clipboard, flash feedback ---
+  function copyText(text, btn, label) {
+    function done(ok) { btn.textContent = ok ? 'Copied' : 'Select to copy'; setTimeout(function () { btn.textContent = label; }, 1800); }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(false); });
+    } else {
+      done(false);
+    }
+  }
+
+  // ---------------- theme toggle: auto -> light -> dark, persisted ---------
   var root = document.documentElement;
   var btn = document.getElementById('theme-toggle');
   var KEY = 'bb-theme';
@@ -737,7 +763,16 @@ julia --project=dev examples/pipeline/find_boards.jl</code></pre>
     apply(order[(order.indexOf(cur) + 1) % order.length], true);
   });
 
-  // ------------------------------------------------------ install selector
+  // ---------------- copy buttons: any .copy-btn[data-copy="<pre id>"] ------
+  document.querySelectorAll('.copy-btn[data-copy]').forEach(function (btn) {
+    var target = document.getElementById(btn.dataset.copy);
+    if (!target) return;
+    var label = btn.textContent;
+    btn.addEventListener('click', function () { copyText(target.textContent, btn, label); });
+  });
+
+  // ---------------- install selector (BlobBoards-specific: delete together --
+  // ---------------- with the #install section and its CSS block) -----------
   var CLONE = 'git clone https://github.com/prittjam/BlobBoards.jl && cd BlobBoards.jl';
   var RECIPES = {
     'julia|pixi': {
@@ -788,25 +823,8 @@ julia --project=dev examples/pipeline/find_boards.jl</code></pre>
   }
   langBtns.forEach(function (b) { b.addEventListener('click', function () { state.lang = b.dataset.lang; render(); }); });
   methodBtns.forEach(function (b) { b.addEventListener('click', function () { if (!b.disabled) { state.method = b.dataset.method; render(); } }); });
-  // Copy `text` to the clipboard and flash feedback on `btn`, restoring `label`.
-  function copyText(text, btn, label) {
-    function done(ok) { btn.textContent = ok ? 'Copied' : 'Select to copy'; setTimeout(function () { btn.textContent = label; }, 1800); }
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(false); });
-    } else {
-      done(false);
-    }
-  }
   copyBtn.addEventListener('click', function () { copyText(cmdEl.textContent, copyBtn, 'Copy'); });
   render();
-
-  // ------------------------------------------------------ copy buttons
-  document.querySelectorAll('.copy-btn[data-copy]').forEach(function (btn) {
-    var target = document.getElementById(btn.dataset.copy);
-    if (!target) return;
-    var label = btn.textContent;
-    btn.addEventListener('click', function () { copyText(target.textContent, btn, label); });
-  });
 })();
 </script>
 </body>
