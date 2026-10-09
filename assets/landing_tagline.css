@@ -19,3 +19,6 @@
     #landing .landing-name { font-size: 1.6rem !important; }
     #landing .landing-title { font-size: 2rem !important; }
 }
+
+/* The Code button until the repository is public: shown, greyed, not a link. */
+#landing a[href="#code-coming-soon"] { opacity: 0.45; pointer-events: none; cursor: default; }
